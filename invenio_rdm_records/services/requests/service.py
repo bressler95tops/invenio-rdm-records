@@ -10,6 +10,7 @@
 from invenio_records_resources.services import Service
 from invenio_requests import current_requests_service
 from invenio_search.engine import dsl
+from invenio_pidstore.errors import PIDUnregistered  # <--- CRITICAL IMPORT
 
 
 class RecordRequestsService(Service):
@@ -35,8 +36,18 @@ class RecordRequestsService(Service):
         **kwargs,
     ):
         """Search for record's requests."""
-        record = self.record_cls.pid.resolve(record_pid)
-        self.require_permission(identity, "read", record=record)
+        try:
+            # Try to resolve the record to check permissions
+            record = self.record_cls.pid.resolve(record_pid)
+            self.require_permission(identity, "read", record=record)
+        except PIDUnregistered:
+            # If PID doesn't exist, return a valid but empty Invenio ResultList
+            return self.result_list(
+                self,
+                identity,
+                {"hits": {"hits": [], "total": {"value": 0}}},
+                params=params,
+            )
 
         search_filter = dsl.query.Bool(
             "must",
