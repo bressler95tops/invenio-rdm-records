@@ -139,8 +139,8 @@ async function _saveDraft(
     response = await draftsService.read(draftWithLinks.links);
 
     const safeFetchErrors = typeof response.errors === 'string' 
-    ? response.errors 
-    : JSON.stringify(response.errors);
+      ? response.errors 
+      : JSON.stringify(response.errors);
 
     dispatchFn({
       type: DRAFT_FETCHED,
@@ -163,14 +163,15 @@ async function _saveDraft(
   
   // Throw validation errors from the partially saved draft
   if (draftHasValidationErrors) {
-    const safeErrors = typeof draftValidationErrorResponse.errors === 'string' 
+    const safeFetchErrors = typeof draftValidationErrorResponse.errors === 'string' 
       ? draftValidationErrorResponse.errors 
       : JSON.stringify(draftValidationErrorResponse.errors);
+
     dispatchFn({
       type: partialValidationActionType,
       payload: {
         data: draftValidationErrorResponse.data,
-        errors: safeErrors,
+        errors: safeFetchErrors,
       },
     });
     throw draftValidationErrorResponse;
@@ -195,9 +196,14 @@ export const save = (draft) => {
       showOnlyValidationErrorsWithSeverityError: false,
     });
 
+    const safeFetchErrors = typeof response.errors === 'string' 
+      ? response.errors 
+      : JSON.stringify(response.errors);
+
     dispatch({
       type: DRAFT_SAVE_SUCCEEDED,
       payload: { data: response.data },
+      errors: safeFetchErrors,
     });
   };
 };
