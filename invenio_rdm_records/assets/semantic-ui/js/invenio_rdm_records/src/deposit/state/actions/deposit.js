@@ -154,13 +154,17 @@ async function _saveDraft(
       ...response.errors,
     };
   }
+  
   // Throw validation errors from the partially saved draft
   if (draftHasValidationErrors) {
+    const safeErrors = typeof draftValidationErrorResponse.errors === 'string' 
+      ? draftValidationErrorResponse.errors 
+      : JSON.stringify(draftValidationErrorResponse.errors);
     dispatchFn({
       type: partialValidationActionType,
       payload: {
         data: draftValidationErrorResponse.data,
-        errors: draftValidationErrorResponse.errors,
+        errors: safeErrors,
       },
     });
     throw draftValidationErrorResponse;
