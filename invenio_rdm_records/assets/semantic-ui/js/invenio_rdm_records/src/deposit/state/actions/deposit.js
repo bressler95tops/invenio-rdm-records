@@ -102,9 +102,15 @@ async function _saveDraft(
     response = await saveDraftWithUrlUpdate(draft, draftsService, failType);
   } catch (error) {
     console.error("Error saving draft", error, draft);
+    const safeFetchErrors = typeof error.errors === 'string' 
+      ? error.errors 
+      : JSON.stringify(error.errors);
+
     dispatchFn({
       type: failType,
-      payload: { errors: error.errors },
+      payload: { 
+        errors: safeFetchErrors 
+      },
     });
     throw error;
   }
@@ -137,15 +143,15 @@ async function _saveDraft(
     // fetch the draft after having changed the review request
     // to have the `review` field updated
     response = await draftsService.read(draftWithLinks.links);
-
     const safeFetchErrors = typeof response.errors === 'string' 
       ? response.errors 
       : JSON.stringify(response.errors);
-
     dispatchFn({
       type: DRAFT_FETCHED,
-      payload: { data: response.data },
-      errors: safeFetchErrors,
+      payload: { 
+        data: response.data,
+        errors: safeFetchErrors
+       },
     });
 
     // previously saved data should be overriden by the latest read draft
@@ -160,7 +166,6 @@ async function _saveDraft(
       ...response.errors,
     };
   }
-  
   // Throw validation errors from the partially saved draft
   if (draftHasValidationErrors) {
     const safeFetchErrors = typeof draftValidationErrorResponse.errors === 'string' 
@@ -196,14 +201,9 @@ export const save = (draft) => {
       showOnlyValidationErrorsWithSeverityError: false,
     });
 
-    const safeFetchErrors = typeof response.errors === 'string' 
-      ? response.errors 
-      : JSON.stringify(response.errors);
-
     dispatch({
       type: DRAFT_SAVE_SUCCEEDED,
       payload: { data: response.data },
-      errors: safeFetchErrors,
     });
   };
 };
@@ -237,9 +237,15 @@ export const publish = (draft, { removeSelectedCommunity = false }) => {
       window.location.replace(recordURL);
     } catch (error) {
       console.error("Error publishing draft", error, draft);
+      const safeFetchErrors = typeof error.errors === 'string' 
+        ? error.errors 
+        : JSON.stringify(error.errors);
+
       dispatch({
         type: DRAFT_PUBLISH_FAILED,
-        payload: { errors: error.errors },
+        payload: { 
+          errors: safeFetchErrors
+        },
       });
       throw error;
     }
@@ -275,9 +281,14 @@ export const submitReview = (draft, { reviewComment, directPublish }) => {
       window.location.replace(nextURL);
     } catch (error) {
       console.error("Error submitting review", error, draft);
+      const safeFetchErrors = typeof error.errors === 'string' 
+        ? error.errors 
+        : JSON.stringify(error.errors);
       dispatch({
         type: DRAFT_SUBMIT_REVIEW_FAILED,
-        payload: { errors: error.errors },
+        payload: { 
+          errors: safeFetchErrors 
+        },
       });
       throw error;
     }
@@ -324,9 +335,16 @@ export const delete_ = () => {
       window.location.replace(redirectURL);
     } catch (error) {
       console.error("Error deleting draft", error);
+      const safeFetchErrors = typeof error.errors === 'string' 
+        ? error.errors 
+        : JSON.stringify(error.errors);
+
       dispatch({
         type: DRAFT_DELETE_FAILED,
-        payload: { errors: error.errors },
+        payload: { 
+          errors: 
+          safeFetchErrors 
+        },
       });
       throw error;
     }
@@ -355,9 +373,15 @@ export const reservePID = (draft, { pidType }) => {
       });
     } catch (error) {
       console.error("Error reserving PID", error, draft);
+      const safeFetchErrors = typeof error.errors === 'string' 
+        ? error.errors 
+        : JSON.stringify(error.errors);
+
       dispatch({
         type: RESERVE_PID_FAILED,
-        payload: { errors: error.errors },
+        payload: { 
+          errors: safeFetchErrors 
+        },
       });
       throw error;
     }
@@ -386,9 +410,15 @@ export const discardPID = (draft, { pidType }) => {
       });
     } catch (error) {
       console.error("Error discarding PID", error, draft);
+      const safeFetchErrors = typeof error.errors === 'string' 
+        ? error.errors 
+        : JSON.stringify(error.errors);
+
       dispatch({
         type: DISCARD_PID_FAILED,
-        payload: { errors: error.errors },
+        payload: { 
+          errors: safeFetchErrors 
+        },
       });
       throw error;
     }
