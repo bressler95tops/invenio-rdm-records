@@ -37,12 +37,11 @@ class RecordRequestsService(Service):
     ):
         """Search for record's requests."""
         try:
-            # Try to resolve the record to check permissions
             record = self.record_cls.pid.resolve(record_pid)
             self.require_permission(identity, "read", record=record)
-            print(f"DEBUG: PID {record_pid} resolved successfully.")
         except PIDUnregistered:
-            # If PID doesn't exist, return a valid but empty Invenio ResultList
+            # We return a successful 'empty' response. 
+            # This prevents the 'Object instead of String' React crash.
             return self.result_list(
                 self,
                 identity,
