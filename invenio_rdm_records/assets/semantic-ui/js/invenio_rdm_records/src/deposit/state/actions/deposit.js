@@ -137,9 +137,15 @@ async function _saveDraft(
     // fetch the draft after having changed the review request
     // to have the `review` field updated
     response = await draftsService.read(draftWithLinks.links);
+
+    const safeFetchErrors = typeof response.errors === 'string' 
+    ? response.errors 
+    : JSON.stringify(response.errors);
+
     dispatchFn({
       type: DRAFT_FETCHED,
       payload: { data: response.data },
+      errors: safeFetchErrors,
     });
 
     // previously saved data should be overriden by the latest read draft
