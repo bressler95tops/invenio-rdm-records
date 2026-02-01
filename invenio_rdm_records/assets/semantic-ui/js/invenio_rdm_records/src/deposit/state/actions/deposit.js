@@ -35,15 +35,15 @@ import {
 
 const deepStringifyErrors = (errors) => {
   if (!errors) return null;
-  if (typeof errors === 'string') return errors;
+  if (typeof errors === "string") return errors;
   
   // If it's the specific Invenio object {message, severity...}
-  if (errors.message && typeof errors.message === 'string') {
+  if (errors.message && typeof errors.message === "string") {
     return errors.message;
   }
 
   // If it's a nested object, look deeper
-  if (typeof errors === 'object') {
+  if (typeof errors === "object") {
     return Object.keys(errors).reduce((acc, key) => {
       acc[key] = deepStringifyErrors(errors[key]);
       return acc;
