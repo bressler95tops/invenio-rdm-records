@@ -33,24 +33,24 @@ import {
   SET_DOI_NEEDED,
 } from "../types";
 
-const deepStringifyErrors = (errors) => {
-  if (!errors) return null;
-  if (typeof errors === "string") return errors;
-  
-  // If it's the specific Invenio object {message, severity...}
-  if (errors.message && typeof errors.message === "string") {
-    return errors.message;
+export const deepStringifyErrors = (errors) => {
+  if (typeof errors === "string") {
+    return errors;
   }
-
-  // If it's a nested object, look deeper
-  if (typeof errors === "object") {
-    return Object.keys(errors).reduce((acc, key) => {
-      acc[key] = deepStringifyErrors(errors[key]);
-      return acc;
-    }, {});
+  if (Array.isArray(errors)) {
+    return errors.map(deepStringifyErrors).join(", ");
   }
-
-  return JSON.stringify(errors);
+  if (typeof errors === "object" && errors !== null) {
+    return Object.entries(errors)
+      .map(([key, value]) => {
+        const stringifiedValue = deepStringifyErrors(value);
+        return key === "message"
+          ? stringifiedValue
+          : `${key}: ${stringifiedValue}`;
+      })
+      .join("; ");
+  }
+  return String(errors);
 };
 
 async function changeURLAfterCreation(draftURL) {
