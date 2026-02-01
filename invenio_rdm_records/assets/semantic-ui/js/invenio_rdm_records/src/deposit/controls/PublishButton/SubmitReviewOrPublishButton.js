@@ -73,6 +73,7 @@ class SubmitReviewOrPublishComponent extends Component {
           fluid
           className="mb-10"
           record={record}
+          doiReservationCheck={this.doiReservationCheck}
         />
       );
     } else if (showChangeCommunityButton) {
