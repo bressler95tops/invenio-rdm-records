@@ -81,8 +81,9 @@ export class DepositFormApp extends Component {
 
     if (props.errors) {
       // Use the serializer, but ensure the result is 'React-safe'
-      const deserialized = recordSerializer.deserializeErrors(props.errors);
-      appConfig.errors = typeof deserialized === "string" ? deserialized : JSON.stringify(deserialized);
+      const deserialized = recordSerializer.deserialize(record);
+      appConfig.errors =
+        typeof deserialized === "string" ? deserialized : deserialized.errors;
     }
 
     this.store = configureStore(appConfig);
