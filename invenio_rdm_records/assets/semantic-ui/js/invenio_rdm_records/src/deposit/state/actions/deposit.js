@@ -44,9 +44,7 @@ export const deepStringifyErrors = (errors) => {
     return Object.entries(errors)
       .map(([key, value]) => {
         const stringifiedValue = deepStringifyErrors(value);
-        return key === "message"
-          ? stringifiedValue
-          : `${key}: ${stringifiedValue}`;
+        return key === "message" ? stringifiedValue : `${key}: ${stringifiedValue}`;
       })
       .join("; ");
   }
@@ -130,7 +128,7 @@ async function _saveDraft(
     dispatchFn({
       type: failType,
       payload: { 
-        errors: deepStringifyErrors(error.errors) 
+        errors: deepStringifyErrors(error.errors),
       },
     });
     throw error;
@@ -169,7 +167,7 @@ async function _saveDraft(
       type: DRAFT_FETCHED,
       payload: { 
         data: response.data,
-        errors: deepStringifyErrors(response.errors)
+        errors: deepStringifyErrors(response.errors),
        },
     });
 
@@ -257,7 +255,7 @@ export const publish = (draft, { removeSelectedCommunity = false }) => {
       dispatch({
         type: DRAFT_PUBLISH_FAILED,
         payload: { 
-          errors: deepStringifyErrors(error.errors)
+          errors: deepStringifyErrors(error.errors),
         },
       });
       throw error;
@@ -298,7 +296,7 @@ export const submitReview = (draft, { reviewComment, directPublish }) => {
       dispatch({
         type: DRAFT_SUBMIT_REVIEW_FAILED,
         payload: { 
-          errors: deepStringifyErrors(error.errors)
+          errors: deepStringifyErrors(error.errors),
         },
       });
       throw error;
@@ -350,7 +348,7 @@ export const delete_ = () => {
       dispatch({
         type: DRAFT_DELETE_FAILED,
         payload: { 
-          errors: deepStringifyErrors(error.errors) 
+          errors: deepStringifyErrors(error.errors),
         },
       });
       throw error;
@@ -384,7 +382,7 @@ export const reservePID = (draft, { pidType }) => {
       dispatch({
         type: RESERVE_PID_FAILED,
         payload: { 
-          errors: deepStringifyErrors(error.errors)
+          errors: deepStringifyErrors(error.errors),
         },
       });
       throw error;
@@ -418,7 +416,7 @@ export const discardPID = (draft, { pidType }) => {
       dispatch({
         type: DISCARD_PID_FAILED,
         payload: { 
-          errors: deepStringifyErrors(error.errors)
+          errors: deepStringifyErrors(error.errors),
         },
       });
       throw error;
