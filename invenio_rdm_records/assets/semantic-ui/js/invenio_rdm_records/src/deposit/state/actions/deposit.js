@@ -44,7 +44,9 @@ export const deepStringifyErrors = (errors) => {
     return Object.entries(errors)
       .map(([key, value]) => {
         const stringifiedValue = deepStringifyErrors(value);
-        return key === "message" ? stringifiedValue : `${key}: ${stringifiedValue}`;
+        return key === "message"
+          ? stringifiedValue
+          : `${key}: ${stringifiedValue}`;
       })
       .join("; ");
   }
@@ -124,10 +126,10 @@ async function _saveDraft(
     console.log("DEBUG: Save Error Raw Object:", error);
     console.log("DEBUG: Save Error Keys:", Object.keys(error));
     console.log("DEBUG: Save Error .errors field:", error.errors);
-    
+
     dispatchFn({
       type: failType,
-      payload: { 
+      payload: {
         errors: deepStringifyErrors(error.errors),
       },
     });
@@ -140,7 +142,11 @@ async function _saveDraft(
   const draftValidationErrorResponse = draftHasValidationErrors ? response : {};
 
   const {
-    actions: { communityStateMustBeChecked, shouldDeleteReview, shouldUpdateReview },
+    actions: {
+      communityStateMustBeChecked,
+      shouldDeleteReview,
+      shouldUpdateReview,
+    },
     selectedCommunity,
   } = depositState.editorState;
 
@@ -165,10 +171,10 @@ async function _saveDraft(
 
     dispatchFn({
       type: DRAFT_FETCHED,
-      payload: { 
+      payload: {
         data: response.data,
         errors: deepStringifyErrors(response.errors),
-       },
+      },
     });
 
     // previously saved data should be overriden by the latest read draft
@@ -185,7 +191,6 @@ async function _saveDraft(
   }
   // Throw validation errors from the partially saved draft
   if (draftHasValidationErrors) {
-
     dispatchFn({
       type: partialValidationActionType,
       payload: {
@@ -245,7 +250,9 @@ export const publish = (draft, { removeSelectedCommunity = false }) => {
 
     const draftWithLinks = response.data;
     try {
-      const response = await config.service.drafts.publish(draftWithLinks.links);
+      const response = await config.service.drafts.publish(
+        draftWithLinks.links
+      );
       // after publishing, redirect to the published record
       const recordURL = response.data.links.self_html;
       window.location.replace(recordURL);
@@ -254,7 +261,7 @@ export const publish = (draft, { removeSelectedCommunity = false }) => {
 
       dispatch({
         type: DRAFT_PUBLISH_FAILED,
-        payload: { 
+        payload: {
           errors: deepStringifyErrors(error.errors),
         },
       });
@@ -277,7 +284,8 @@ export const submitReview = (draft, { reviewComment, directPublish }) => {
       depositState: getState().deposit,
       dispatchFn: dispatch,
       failType: DRAFT_SUBMIT_REVIEW_FAILED,
-      partialValidationActionType: DRAFT_SUBMIT_REVIEW_FAILED_WITH_VALIDATION_ERRORS,
+      partialValidationActionType:
+        DRAFT_SUBMIT_REVIEW_FAILED_WITH_VALIDATION_ERRORS,
       // Users should be able to submit for review a record with validation warnings.
       showOnlyValidationErrorsWithSeverityError: true,
     });
@@ -295,7 +303,7 @@ export const submitReview = (draft, { reviewComment, directPublish }) => {
 
       dispatch({
         type: DRAFT_SUBMIT_REVIEW_FAILED,
-        payload: { 
+        payload: {
           errors: deepStringifyErrors(error.errors),
         },
       });
@@ -347,7 +355,7 @@ export const delete_ = () => {
 
       dispatch({
         type: DRAFT_DELETE_FAILED,
-        payload: { 
+        payload: {
           errors: deepStringifyErrors(error.errors),
         },
       });
@@ -370,7 +378,10 @@ export const reservePID = (draft, { pidType }) => {
       let response = await saveDraftWithUrlUpdate(draft, config.service.drafts);
 
       const draftWithLinks = response.data;
-      response = await config.service.drafts.reservePID(draftWithLinks.links, pidType);
+      response = await config.service.drafts.reservePID(
+        draftWithLinks.links,
+        pidType
+      );
 
       dispatch({
         type: RESERVE_PID_SUCCEEDED,
@@ -381,7 +392,7 @@ export const reservePID = (draft, { pidType }) => {
 
       dispatch({
         type: RESERVE_PID_FAILED,
-        payload: { 
+        payload: {
           errors: deepStringifyErrors(error.errors),
         },
       });
@@ -404,7 +415,10 @@ export const discardPID = (draft, { pidType }) => {
       let response = await saveDraftWithUrlUpdate(draft, config.service.drafts);
 
       const draftWithLinks = response.data;
-      response = await config.service.drafts.discardPID(draftWithLinks.links, pidType);
+      response = await config.service.drafts.discardPID(
+        draftWithLinks.links,
+        pidType
+      );
 
       dispatch({
         type: DISCARD_PID_SUCCEEDED,
@@ -415,7 +429,7 @@ export const discardPID = (draft, { pidType }) => {
 
       dispatch({
         type: DISCARD_PID_FAILED,
-        payload: { 
+        payload: {
           errors: deepStringifyErrors(error.errors),
         },
       });
