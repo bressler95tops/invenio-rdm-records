@@ -44,9 +44,7 @@ export const deepStringifyErrors = (errors) => {
     return Object.entries(errors)
       .map(([key, value]) => {
         const stringifiedValue = deepStringifyErrors(value);
-        return key === "message"
-          ? stringifiedValue
-          : `${key}: ${stringifiedValue}`;
+        return key === "message" ? stringifiedValue : `${key}: ${stringifiedValue}`;
       })
       .join("; ");
   }
