@@ -120,9 +120,13 @@ async function _saveDraft(
 
   try {
     response = await saveDraftWithUrlUpdate(draft, draftsService, failType);
+    console.log("DEBUG: Save Success JSON:", response.data); // Capture successful save
   } catch (error) {
     console.error("Error saving draft", error, draft);
-
+    console.log("DEBUG: Save Error Raw Object:", error);
+    console.log("DEBUG: Save Error Keys:", Object.keys(error));
+    console.log("DEBUG: Save Error .errors field:", error.errors);
+    
     dispatchFn({
       type: failType,
       payload: { 
