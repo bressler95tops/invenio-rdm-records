@@ -33,6 +33,37 @@ import {
   SET_DOI_NEEDED,
 } from "../types";
 
+const cleanErrors = (obj) => {
+  if (!obj || typeof obj !== "object") return obj;
+  for (const key in obj) {
+    const v = obj[key];
+    // Flatten the specific invenio-checks {message, severity} object
+    if (v?.message && typeof v === "object" && !Array.isArray(v)) {
+      obj[key] = v.message;
+    } else if (typeof v === "object") {
+      cleanErrors(v); // Search deeper
+      // Nuclear fallback for nested arrays of objects
+      if (key === "messages" && Array.isArray(v)) {
+        obj[key] = v.map((item) =>
+          typeof item === "object" ? JSON.stringify(item) : item
+        );
+      }
+    }
+  }
+  return obj;
+};
+
+// Helper to reliably extract backend errors from Axios responses
+const extractRawErrors = (error) => {
+  if (error.response && error.response.data) {
+    const data = error.response.data;
+    if (data.errors) return data.errors;
+    if (data.message) return data.message;
+    return data;
+  }
+  return error.errors || "An unknown error occurred.";
+};
+
 async function changeURLAfterCreation(draftURL) {
   window.history.replaceState(undefined, "", draftURL);
 }
@@ -91,6 +122,7 @@ async function _saveDraft(
   {
     depositState,
     dispatchFn,
+    getState,
     failType,
     partialValidationActionType,
     showOnlyValidationErrorsWithSeverityError,
@@ -100,8 +132,30 @@ async function _saveDraft(
 
   try {
     response = await saveDraftWithUrlUpdate(draft, draftsService, failType);
+    if (response.errors || response.data?.errors) {
+      console.log(
+        "Direct Response Errors:",
+        JSON.parse(JSON.stringify(response.errors || {}))
+      );
+      console.log(
+        "Data-Nested Errors:",
+        JSON.parse(JSON.stringify(response.data?.errors || {}))
+      );
+      const firstError = response.errors?.[0] || response.data?.errors?.[0];
+      console.log(
+        "Is the error a React-breaking Object?",
+        typeof firstError === "object"
+      );
+    }
+    console.log("DEBUG: Save Success Payload:", response.data);
+    const currentState = getState();
+    console.log("DEBUG: Full Deposit State on Success:", getState()?.deposit);
   } catch (error) {
     console.error("Error saving draft", error, draft);
+    console.error("DEBUG: Save Error Object:", error);
+    if (error.response) {
+      console.log("DEBUG: Raw Server Response Data:", error.response.data);
+    }
     dispatchFn({
       type: failType,
       payload: { errors: error.errors },
@@ -109,15 +163,23 @@ async function _saveDraft(
     throw error;
   }
 
+  // Clean both the direct errors and any errors embedded in data
+  response.errors = cleanErrors(response.errors);
+  if (response.data?.errors) {
+    response.data.errors = cleanErrors(response.data.errors);
+  }
+
   const draftHasValidationErrors = showOnlyValidationErrorsWithSeverityError
     ? _hasValidationErrorsWithSeverityError(response.errors)
     : !_isEmpty(response.errors);
   const draftValidationErrorResponse = draftHasValidationErrors ? response : {};
 
-  const {
-    actions: { communityStateMustBeChecked, shouldDeleteReview, shouldUpdateReview },
-    selectedCommunity,
-  } = depositState.editorState;
+  const editorState = depositState?.editorState || {};
+  const actions = editorState?.actions || {};
+  const communityStateMustBeChecked = actions?.communityStateMustBeChecked || false;
+  const shouldDeleteReview = actions?.shouldDeleteReview || false;
+  const shouldUpdateReview = actions?.shouldUpdateReview || false;
+  const selectedCommunity = editorState?.selectedCommunity;
 
   if (communityStateMustBeChecked) {
     const draftWithLinks = response.data;
@@ -179,6 +241,7 @@ export const save = (draft) => {
     response = await _saveDraft(draft, config.service.drafts, {
       depositState: getState().deposit,
       dispatchFn: dispatch,
+      getState: getState,
       failType: DRAFT_SAVE_FAILED,
       partialValidationActionType: DRAFT_HAS_VALIDATION_ERRORS,
       // Users should see validation warnings when saving a draft.
@@ -207,6 +270,7 @@ export const publish = (draft, { removeSelectedCommunity = false }) => {
     const response = await _saveDraft(draft, config.service.drafts, {
       depositState: getState().deposit,
       dispatchFn: dispatch,
+      getState: getState,
       failType: DRAFT_PUBLISH_FAILED,
       partialValidationActionType: DRAFT_PUBLISH_FAILED_WITH_VALIDATION_ERRORS,
       // Users should be able to publish a record with validation warnings.
@@ -221,9 +285,10 @@ export const publish = (draft, { removeSelectedCommunity = false }) => {
       window.location.replace(recordURL);
     } catch (error) {
       console.error("Error publishing draft", error, draft);
+      const rawErrors = extractRawErrors(error);
       dispatch({
         type: DRAFT_PUBLISH_FAILED,
-        payload: { errors: error.errors },
+        payload: { errors: cleanErrors(rawErrors) },
       });
       throw error;
     }
@@ -243,6 +308,7 @@ export const submitReview = (draft, { reviewComment, directPublish }) => {
     const response = await _saveDraft(draft, config.service.drafts, {
       depositState: getState().deposit,
       dispatchFn: dispatch,
+      getState: getState,
       failType: DRAFT_SUBMIT_REVIEW_FAILED,
       partialValidationActionType: DRAFT_SUBMIT_REVIEW_FAILED_WITH_VALIDATION_ERRORS,
       // Users should be able to submit for review a record with validation warnings.
@@ -259,9 +325,10 @@ export const submitReview = (draft, { reviewComment, directPublish }) => {
       window.location.replace(nextURL);
     } catch (error) {
       console.error("Error submitting review", error, draft);
+      const rawErrors = extractRawErrors(error);
       dispatch({
         type: DRAFT_SUBMIT_REVIEW_FAILED,
-        payload: { errors: error.errors },
+        payload: { errors: cleanErrors(rawErrors) },
       });
       throw error;
     }
@@ -277,6 +344,7 @@ export const preview = (draft) => {
     const response = await _saveDraft(draft, config.service.drafts, {
       depositState: getState().deposit,
       dispatchFn: dispatch,
+      getState: getState,
       failType: DRAFT_PREVIEW_FAILED,
       partialValidationActionType: DRAFT_HAS_VALIDATION_ERRORS,
       // Users should be able to preview a record with validation warnings.
