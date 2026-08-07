@@ -405,5 +405,12 @@ class MetadataSchema(Schema):
     )
     additional_descriptions = fields.List(fields.Nested(DescriptionSchema))
     locations = fields.Nested(FeatureSchema)
-    funding = fields.List(fields.Nested(FundingSchema))
+    funding = fields.List(
+        fields.Nested(FundingSchema),
+        required=True,
+        validate=validate.Length(min=1),
+        error_messages={
+            "required": _("An award is required for NASA records.")
+        },
+    )
     references = fields.List(fields.Nested(ReferenceSchema))
