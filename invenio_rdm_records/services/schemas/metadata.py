@@ -11,6 +11,7 @@
 
 from functools import partial
 from urllib import parse
+from xml.parsers.expat import errors
 
 from flask import current_app
 from invenio_i18n import lazy_gettext as _
@@ -115,9 +116,13 @@ class PersonOrOrganizationSchema(Schema):
     def validate_names(self, data, **kwargs):
         """Validate names based on type."""
         if data["type"] == "personal":
+            errors = {}
             if not data.get("family_name"):
-                messages = [_("Family name cannot be blank.")]
-                raise ValidationError({"family_name": messages})
+                errors["family_name"] = [_("Family name cannot be blank.")]
+            if not data.get("given_name"):
+                errors["given_name"] = [_("First name cannot be blank.")]
+            if errors:
+                raise ValidationError(errors)
 
         elif data["type"] == "organizational":
             if not data.get("name"):
